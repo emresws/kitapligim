@@ -1,0 +1,26 @@
+{
+  "name": "kitapligim-docker",
+  "version": "2.4.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build-readers.mjs && node scripts/precache.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build:local": "node scripts/build-readers.mjs --local"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@noble/hashes": "1.8.0",
+    "epubjs": "^0.3.93",
+    "esbuild": "^0.28.2",
+    "foliate-js": "1.0.1",
+    "jszip": "^3.10.2",
+    "pdfjs-dist": "^6.4.299"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.4"
+  }
+}

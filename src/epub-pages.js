@@ -1,0 +1,11 @@
+import JSZip from 'jszip';
+export async function epubPages(data){
+ const zip=await JSZip.loadAsync(data);const parse=s=>new DOMParser().parseFromString(s,'application/xml');const container=zip.file('META-INF/container.xml');if(!container)throw Error('EPUB bilgisi yok');const path=parse(await container.async('string')).getElementsByTagName('rootfile')[0]?.getAttribute('full-path');const opfFile=zip.file(path);if(!opfFile)throw Error('EPUB bilgisi yok');const opf=parse(await opfFile.async('string'));const items=Array.from(opf.getElementsByTagNameNS('*','item'));const resolve=href=>decodeURIComponent(new URL(href,'https://epub.local/'+path).pathname.slice(1));
+ for(const item of items.filter(i=>(i.getAttribute('properties')||'').split(/\s+/).includes('nav')||i.getAttribute('media-type')==='application/x-dtbncx+xml')){
+  const file=zip.file(resolve(item.getAttribute('href')));if(!file)continue;const doc=parse(await file.async('string'));const nav=Array.from(doc.getElementsByTagNameNS('*','nav')).find(n=>(n.getAttribute('epub:type')||n.getAttributeNS('http://www.idpf.org/2007/ops','type')||'').split(/\s+/).includes('page-list'));const labels=nav?Array.from(nav.getElementsByTagNameNS('*','a')).map(a=>a.textContent.trim()):Array.from(doc.getElementsByTagNameNS('*','pageTarget')).filter(n=>n.getAttribute('type')==='normal').map(n=>n.getAttribute('value'));const nums=labels.filter(x=>/^\d+$/.test(x)).map(Number).filter(n=>n>0);if(nums.length)return {pages:Math.max(...nums),pagesSource:'epub-pagination'};
+ }
+ const spine=Array.from(opf.getElementsByTagNameNS('*','itemref')).filter(i=>i.getAttribute('linear')!=='no');let words=0;
+ for(const ref of spine){const item=items.find(i=>i.getAttribute('id')===ref.getAttribute('idref'));if(!item)continue;const f=zip.file(resolve(item.getAttribute('href')));if(!f)continue;const doc=parse(await f.async('string'));for(const name of ['script','style'])for(const n of Array.from(doc.getElementsByTagNameNS('*',name)))n.parentNode?.removeChild(n);const body=doc.getElementsByTagNameNS('*','body')[0];const text=body?.textContent||'';words+=(text.match(/[\p{L}\p{N}]+(?:[’'-][\p{L}\p{N}]+)*/gu)||[]).length;
+ }
+ return words?{pages:Math.max(1,Math.ceil(words/250)),pagesSource:'estimated'}:{pages:null,pagesSource:'unknown'};
+}

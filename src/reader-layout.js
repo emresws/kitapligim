@@ -1,0 +1,2 @@
+export function pdfScale(mode,pageWidth,pageHeight,availableWidth,availableHeight){const w=Math.max(1,availableWidth-12),h=Math.max(1,availableHeight-12);const scale=mode==='fit-page'?Math.min(w/pageWidth,h/pageHeight):mode==='fit-width'?w/pageWidth:Number(mode)/100;return Math.max(.05,Number.isFinite(scale)&&scale>0?scale:1);}
+export function requestedPage(value,total){const n=Number(value);if(!Number.isInteger(n)||n<1||n>total)throw Error(`1–${total} arasında bir sayı gir.`);return n;}

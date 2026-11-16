@@ -1,0 +1,13 @@
+node_modules
+data
+backups
+dist
+dist-local
+.env*
+.venv
+.git
+.github
+__pycache__
+tests
+*.sqlite*
+*.zip

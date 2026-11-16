@@ -1,0 +1,51 @@
+name: Release 1
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/release-1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-1
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm test
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: npm run build && npm run build:local
+      - name: Package local edition
+        run: |
+          mkdir -p release-local/Kitapligim
+          cp BASLAT.cmd baslat.py LICENSE README.md release-local/Kitapligim/
+          mv dist-local release-local/Kitapligim/site
+          (cd release-local && zip -q -r ../Kitapligim-2.4.0-Yerel.zip Kitapligim)
+      - name: Publish Release 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release 1 already exists."
+          else
+            gh release create v1.0.0 Kitapligim-2.4.0-Yerel.zip \
+              --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Release 1 · Kitaplığım 2.4.0" --notes-file RELEASE-NOTES.md
+          fi
